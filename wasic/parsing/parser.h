@@ -13,9 +13,15 @@ public:
         : source(std::move(tokens)) {}
 
     Program parse() {
+        for (const auto& token : source) {
 
+        }
     }
 
 private:
     std::string source;
+
+    void identityFunction() {
+
+    }
 };
