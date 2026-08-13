@@ -2,6 +2,7 @@
 #include <memory>
 
 #include "wasic/parsing/lexer.h"
+#include "wasic/parsing/parser.h"
 
 int main() {
     const char* script = R"(
