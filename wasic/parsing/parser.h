@@ -9,7 +9,7 @@
 
 class Parser {
 public:
-    explicit Parser(const std::vector<Token> tokens)
+    explicit Parser(const std::vector<Token>& tokens)
         : source(std::move(tokens)) {}
 
     Program parse() {
@@ -19,9 +19,6 @@ public:
     }
 
 private:
-    std::string source;
+    std::vector<Token> source;
 
-    void identityFunction() {
-
-    }
 };
