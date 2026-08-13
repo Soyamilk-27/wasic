@@ -14,7 +14,10 @@ int main() {
     )";
 
     Lexer lexer(script);
-    auto tokens = lexer.tokenize();
+    const auto tokens = lexer.tokenize();
+
+    Parser parser(tokens);
+
 
     for (const auto& token : tokens) {
         std::cout

@@ -11,7 +11,7 @@ message(STATUS "LLVM version: ${LLVM_VERSION}")
 message(STATUS "LLVM config: ${LLVM_DIR}")
 
 add_executable(wasic main.cpp
-        wasic/types/types_compiler.h
+        wasic/types/types_parser.h
         wasic/parsing/lexer.h
         wasic/parsing/parser.h)
 
