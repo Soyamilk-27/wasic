@@ -11,7 +11,8 @@ message(STATUS "LLVM version: ${LLVM_VERSION}")
 message(STATUS "LLVM config: ${LLVM_DIR}")
 
 add_executable(wasic main.cpp
-        wasic/types/types_compiler.h)
+        wasic/types/types_compiler.h
+        wasic/parsing/lexer.h)
 
 target_include_directories(wasic PRIVATE
         ${LLVM_INCLUDE_DIRS}
