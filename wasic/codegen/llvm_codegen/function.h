@@ -10,6 +10,9 @@ inline void LLVMCodegen::generateFunction(const Function& fn) {
     builder.SetInsertPoint(entry);
 
     for (auto& stmt : fn.body) {
-
+        generateStatement(stmt);
     }
+
+    // Success
+    builder.CreateRet(llvm::ConstantInt::get(builder.getInt32Ty(), 0));
 }
