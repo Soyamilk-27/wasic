@@ -18,6 +18,7 @@ add_executable(wasic main.cpp
         wasic/parsing/parser/expression.h
         wasic/parsing/parser/statement.h
         wasic/ast_dump.h
+        wasic/codegen/llvm_codegen.h
 )
 
 target_include_directories(wasic PRIVATE

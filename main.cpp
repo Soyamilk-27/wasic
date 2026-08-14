@@ -2,14 +2,13 @@
 
 #include "wasic/parsing/lexer.h"
 #include "wasic/parsing/parser.h"
-#include "wasic/ast_dump.h"
+#include "wasic/codegen/llvm_codegen.h"
 
 int main() {
     const char* script = R"(
     fn main()
-        x = (2 + 3) * -4
-        y = [1 -2 3 * 4]
-        print(x + y)
+        x = 10
+        y = x * 2
     end
     )";
 
@@ -19,7 +18,9 @@ int main() {
     Parser parser(tokens);
     Program program = parser.parse();
 
-    dumpProgram(program);
+    LLVMCodegen codegen;
+    codegen.generate(program);
+    codegen.dump();
 
     return 0;
 }
