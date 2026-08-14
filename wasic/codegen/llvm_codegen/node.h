@@ -23,6 +23,27 @@ inline llvm::Value* LLVMCodegen::generateNode(const Node& node) {
             );
         }
 
+        case Node::Kind::Binary: {
+            llvm::Value* lhs = generateNode(node.children[0]);
+            llvm::Value* rhs = generateNode(node.children[1]);
+
+            if (node.text == "+")
+                return builder.CreateAdd(lhs, rhs, "add");
+
+            if (node.text == "-")
+                return builder.CreateSub(lhs, rhs, "sub");
+
+            if (node.text == "*")
+                return builder.CreateMul(lhs, rhs, "mul");
+
+            if (node.text == "/")
+                return builder.CreateSDiv(lhs, rhs, "div");
+
+            throw std::runtime_error(
+                "Unknown binary operator: " + node.text
+            );
+        }
+
         default:
             throw std::runtime_error(
                 "Unsupported AST node"
