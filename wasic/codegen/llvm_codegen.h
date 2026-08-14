@@ -5,6 +5,7 @@
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
+#include <llvm/IR/Verifier.h>
 
 #include "../types/types_parser.h"
 
@@ -16,7 +17,7 @@ public:
 
     void generate(const Program& program);
 
-    void dump();
+    void dump() const;
 
 private:
     llvm::LLVMContext context;
@@ -27,3 +28,6 @@ private:
     void generateStatement(const Statement& stmt);
     llvm::Value* generateNode(const Node& node);
 };
+
+#include "llvm_codegen/core.h"
+#include "llvm_codegen/function.h"

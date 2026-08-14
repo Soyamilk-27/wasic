@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "wasic/ast_dump.h"
 #include "wasic/parsing/lexer.h"
 #include "wasic/parsing/parser.h"
 #include "wasic/codegen/llvm_codegen.h"
@@ -18,9 +19,11 @@ int main() {
     Parser parser(tokens);
     Program program = parser.parse();
 
-    LLVMCodegen codegen;
-    codegen.generate(program);
-    codegen.dump();
+    dumpProgram(program);
+
+    //LLVMCodegen codegen;
+    //codegen.generate(program);
+    //codegen.dump();
 
     return 0;
 }
