@@ -16,9 +16,11 @@ inline Statement Parser::parseStatement() {
         stmt.value = parseExpression();
 
         return stmt;
-        }
+    }
 
-    throw std::runtime_error(
-        "Expected statement, got: " + current().text
-    );
+    // any expression can be a statement
+    stmt.kind = Statement::Kind::Expression;
+    stmt.value = parseExpression();
+
+    return stmt;
 }
