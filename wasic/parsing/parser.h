@@ -131,9 +131,28 @@ private:
         }
 
         if (check(TokenKind::Identifier)) {
+            std::string name = consume(TokenKind::Identifier).text;
+
+            if (check(TokenKind::LParen)) {
+                consume(TokenKind::LParen);
+
+                Node call;
+                call.kind = Node::Kind::Call;
+                call.text = name;
+
+                if (!check(TokenKind::RParen)) {
+                    call.children.push_back(parseExpression());
+                }
+
+                consume(TokenKind::RParen);
+
+                return call;
+            }
+
             Node node;
             node.kind = Node::Kind::Name;
-            node.text = consume(TokenKind::Identifier).text;
+            node.text = name;
+
             return node;
         }
 
