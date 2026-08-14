@@ -29,9 +29,247 @@ inline llvm::Value* LLVMCodegen::generateNode(const Node& node) {
             );
         }
 
+        case Node::Kind::Array: {
+            if (node.children.empty()) {
+                throw std::runtime_error(
+                    "Empty arrays are not supported"
+                );
+            }
+
+            std::vector<llvm::Value*> elements;
+
+            for (const auto& child : node.children)
+                elements.push_back(generateNode(child));
+
+            // If any element is float, the entire array is float.
+            bool isFloat = false;
+
+            for (auto* value : elements) {
+                if (value->getType()->isFloatingPointTy()) {
+                    isFloat = true;
+                    break;
+                }
+            }
+
+            if (isFloat) {
+                for (auto*& value : elements) {
+                    if (value->getType()->isIntegerTy()) {
+                        value = builder.CreateSIToFP(
+                            value,
+                            builder.getFloatTy(),
+                            "int_to_float"
+                        );
+                    }
+                }
+            }
+
+            llvm::Type* elementType =
+                isFloat
+                    ? builder.getFloatTy()
+                    : builder.getInt32Ty();
+
+            auto* arrayType = llvm::ArrayType::get(
+                elementType,
+                elements.size()
+            );
+
+            llvm::Value* result =
+                llvm::UndefValue::get(arrayType);
+
+            for (size_t i = 0; i < elements.size(); ++i) {
+                result = builder.CreateInsertValue(
+                    result,
+                    elements[i],
+                    {static_cast<unsigned>(i)},
+                    "array"
+                );
+            }
+
+            return result;
+        }
+
         case Node::Kind::Binary: {
             llvm::Value* lhs = generateNode(node.children[0]);
             llvm::Value* rhs = generateNode(node.children[1]);
+
+            bool lhsArray = lhs->getType()->isArrayTy();
+            bool rhsArray = rhs->getType()->isArrayTy();
+
+            // ------------------------------------------------------------
+            // Array arithmetic
+            // ------------------------------------------------------------
+
+            if (lhsArray || rhsArray) {
+                size_t count;
+
+                if (lhsArray && rhsArray) {
+                    auto* lhsType =
+                        llvm::cast<llvm::ArrayType>(lhs->getType());
+
+                    auto* rhsType =
+                        llvm::cast<llvm::ArrayType>(rhs->getType());
+
+                    if (lhsType->getNumElements() != rhsType->getNumElements()) {
+                        throw std::runtime_error(
+                            "Array size mismatch in binary operation"
+                        );
+                    }
+
+                    count = lhsType->getNumElements();
+                }
+                else if (lhsArray) {
+                    count = llvm::cast<llvm::ArrayType>(
+                        lhs->getType()
+                    )->getNumElements();
+                }
+                else {
+                    count = llvm::cast<llvm::ArrayType>(
+                        rhs->getType()
+                    )->getNumElements();
+                }
+
+                // Determine the element type.
+                llvm::Type* elementType = nullptr;
+
+                if (lhsArray) {
+                    elementType =
+                        llvm::cast<llvm::ArrayType>(
+                            lhs->getType()
+                        )->getElementType();
+                }
+                else {
+                    elementType =
+                        llvm::cast<llvm::ArrayType>(
+                            rhs->getType()
+                        )->getElementType();
+                }
+
+                auto* resultType =
+                    llvm::ArrayType::get(elementType, count);
+
+                llvm::Value* result =
+                    llvm::UndefValue::get(resultType);
+
+                for (size_t i = 0; i < count; ++i) {
+                    llvm::Value* leftElement;
+                    llvm::Value* rightElement;
+
+                    if (lhsArray) {
+                        leftElement = builder.CreateExtractValue(
+                            lhs,
+                            {static_cast<unsigned>(i)},
+                            "lhs"
+                        );
+                    }
+                    else {
+                        leftElement = lhs;
+                    }
+
+                    if (rhsArray) {
+                        rightElement = builder.CreateExtractValue(
+                            rhs,
+                            {static_cast<unsigned>(i)},
+                            "rhs"
+                        );
+                    }
+                    else {
+                        rightElement = rhs;
+                    }
+
+                    // Array float => scalar gets promoted to float.
+                    if (elementType->isFloatingPointTy()) {
+                        if (leftElement->getType()->isIntegerTy()) {
+                            leftElement = builder.CreateSIToFP(
+                                leftElement,
+                                elementType,
+                                "int_to_float"
+                            );
+                        }
+
+                        if (rightElement->getType()->isIntegerTy()) {
+                            rightElement = builder.CreateSIToFP(
+                                rightElement,
+                                elementType,
+                                "int_to_float"
+                            );
+                        }
+                    }
+
+                    llvm::Value* value = nullptr;
+
+                    if (elementType->isFloatingPointTy()) {
+                        if (node.text == "+")
+                            value = builder.CreateFAdd(
+                                leftElement,
+                                rightElement,
+                                "fadd"
+                            );
+                        else if (node.text == "-")
+                            value = builder.CreateFSub(
+                                leftElement,
+                                rightElement,
+                                "fsub"
+                            );
+                        else if (node.text == "*")
+                            value = builder.CreateFMul(
+                                leftElement,
+                                rightElement,
+                                "fmul"
+                            );
+                        else if (node.text == "/")
+                            value = builder.CreateFDiv(
+                                leftElement,
+                                rightElement,
+                                "fdiv"
+                            );
+                    }
+                    else {
+                        if (node.text == "+")
+                            value = builder.CreateAdd(
+                                leftElement,
+                                rightElement,
+                                "add"
+                            );
+                        else if (node.text == "-")
+                            value = builder.CreateSub(
+                                leftElement,
+                                rightElement,
+                                "sub"
+                            );
+                        else if (node.text == "*")
+                            value = builder.CreateMul(
+                                leftElement,
+                                rightElement,
+                                "mul"
+                            );
+                        else if (node.text == "/")
+                            value = builder.CreateSDiv(
+                                leftElement,
+                                rightElement,
+                                "div"
+                            );
+                    }
+
+                    if (!value) {
+                        throw std::runtime_error(
+                            "Unknown binary operator: " + node.text
+                        );
+                    }
+
+                    result = builder.CreateInsertValue(
+                        result,
+                        value,
+                        {static_cast<unsigned>(i)},
+                        "array"
+                    );
+                }
+
+                return result;
+            }
+
+            // ------------------------------------------------------------
+            // Normal scalar arithmetic
+            // ------------------------------------------------------------
 
             bool isFloat =
                 lhs->getType()->isFloatingPointTy() ||
