@@ -10,7 +10,9 @@
 
 class LLVMCodegen {
 public:
-    LLVMCodegen();
+    LLVMCodegen()
+        : builder(context),
+          module(std::make_unique<llvm::Module>("wasic", context)) {}
 
     void generate(const Program& program);
 
