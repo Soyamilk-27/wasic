@@ -85,7 +85,27 @@ private:
     }
 
     Statement parseStatement() {
-        // what
-        return {};
+        Statement stmt;
+
+        if (check(TokenKind::Identifier) &&
+            peek().kind == TokenKind::Equal) {
+
+            stmt.kind = Statement::Kind::Assignment;
+
+            // Consume "x"
+            stmt.name = consume(TokenKind::Identifier).text;
+
+            // Consume "="
+            consume(TokenKind::Equal);
+
+            // wip
+            // stmt.value = parseExpression();
+
+            return stmt;
+            }
+
+        throw std::runtime_error(
+            "Expected statement, got: " + current().text
+        );
     }
 };
