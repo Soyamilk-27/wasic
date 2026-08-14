@@ -9,7 +9,7 @@ int main() {
     const char* script = R"(
     fn main()
         x = 10
-        y = x
+        y = x + 4
     end
     )";
 
