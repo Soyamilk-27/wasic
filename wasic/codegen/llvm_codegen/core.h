@@ -14,4 +14,6 @@ inline void LLVMCodegen::dump() const {
             "Invalid LLVM module\n"
         );
     }
+
+    module->print(llvm::outs(), nullptr);
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <unordered_map>
 
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
@@ -23,6 +24,7 @@ private:
     llvm::LLVMContext context;
     llvm::IRBuilder<> builder;
     std::unique_ptr<llvm::Module> module;
+    std::unordered_map<std::string, llvm::AllocaInst*> variables;
 
     void generateFunction(const Function& fn);
     void generateStatement(const Statement& stmt);
@@ -32,3 +34,4 @@ private:
 #include "llvm_codegen/core.h"
 #include "llvm_codegen/function.h"
 #include "llvm_codegen/statement.h"
+#include "llvm_codegen/node.h"

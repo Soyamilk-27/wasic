@@ -9,7 +9,7 @@ int main() {
     const char* script = R"(
     fn main()
         x = 10
-        y = x * 2
+        y = 3
     end
     )";
 
@@ -21,9 +21,9 @@ int main() {
 
     dumpProgram(program);
 
-    //LLVMCodegen codegen;
-    //codegen.generate(program);
-    //codegen.dump();
+    LLVMCodegen codegen;
+    codegen.generate(program);
+    codegen.dump();
 
     return 0;
 }
