@@ -84,6 +84,33 @@ private:
         return fn;
     }
 
+    Node parseUnary() {
+        if (check(TokenKind::Minus)) {
+            consume(TokenKind::Minus);
+
+            Node node;
+            node.kind = Node::Kind::Binary;
+            node.text = "-";
+
+            // 0 - x
+            Node zero;
+            zero.kind = Node::Kind::Number;
+            zero.text = "0";
+
+            node.children.push_back(std::move(zero));
+            node.children.push_back(parseUnary());
+
+            return node;
+        }
+
+        if (check(TokenKind::Plus)) {
+            consume(TokenKind::Plus);
+            return parseUnary();
+        }
+
+        return parsePrimary();
+    }
+
     Node parseExpression() {
         Node left = parseTerm();
 
@@ -98,13 +125,13 @@ private:
             op.children.push_back(parseTerm());
 
             left = std::move(op);
-               }
+        }
 
         return left;
     }
 
     Node parseTerm() {
-        Node left = parsePrimary();
+        Node left = parseUnary();
 
         while (check(TokenKind::Star) ||
                check(TokenKind::Slash)) {
@@ -114,15 +141,25 @@ private:
             op.text = consume(current().kind).text;
 
             op.children.push_back(std::move(left));
-            op.children.push_back(parsePrimary());
+            op.children.push_back(parseUnary());
 
             left = std::move(op);
-               }
+        }
 
         return left;
     }
 
     Node parsePrimary() {
+        if (check(TokenKind::LParen)) {
+            consume(TokenKind::LParen);
+
+            Node node = parseExpression();
+
+            consume(TokenKind::RParen);
+
+            return node;
+        }
+
         if (check(TokenKind::Number)) {
             Node node;
             node.kind = Node::Kind::Number;
@@ -172,17 +209,7 @@ private:
         array.kind = Node::Kind::Array;
 
         while (!check(TokenKind::RBracket)) {
-            if (!check(TokenKind::Number)) {
-                throw std::runtime_error(
-                    "Expected number in array, got: " + current().text
-                );
-            }
-
-            Node element;
-            element.kind = Node::Kind::Number;
-            element.text = consume(TokenKind::Number).text;
-
-            array.children.push_back(std::move(element));
+            array.children.push_back(parseExpression());
         }
 
         consume(TokenKind::RBracket);
