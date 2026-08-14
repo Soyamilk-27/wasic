@@ -7,6 +7,12 @@ inline llvm::Value* LLVMCodegen::generateNode(const Node& node) {
         case Node::Kind::Number:
             return builder.getInt32(std::stoll(node.text));
 
+        case Node::Kind::Float:
+            return llvm::ConstantFP::get(
+                builder.getFloatTy(),
+                std::stof(node.text)
+            );
+
         case Node::Kind::Name: {
             auto it = variables.find(node.text);
 
@@ -17,7 +23,7 @@ inline llvm::Value* LLVMCodegen::generateNode(const Node& node) {
             }
 
             return builder.CreateLoad(
-                builder.getInt32Ty(),
+                it->second->getAllocatedType(),
                 it->second,
                 node.text
             );
@@ -26,6 +32,40 @@ inline llvm::Value* LLVMCodegen::generateNode(const Node& node) {
         case Node::Kind::Binary: {
             llvm::Value* lhs = generateNode(node.children[0]);
             llvm::Value* rhs = generateNode(node.children[1]);
+
+            bool isFloat =
+                lhs->getType()->isFloatingPointTy() ||
+                rhs->getType()->isFloatingPointTy();
+
+            if (isFloat) {
+                if (lhs->getType()->isIntegerTy()) {
+                    lhs = builder.CreateSIToFP(
+                        lhs,
+                        builder.getFloatTy(),
+                        "int_to_float"
+                    );
+                }
+
+                if (rhs->getType()->isIntegerTy()) {
+                    rhs = builder.CreateSIToFP(
+                        rhs,
+                        builder.getFloatTy(),
+                        "int_to_float"
+                    );
+                }
+
+                if (node.text == "+")
+                    return builder.CreateFAdd(lhs, rhs, "fadd");
+
+                if (node.text == "-")
+                    return builder.CreateFSub(lhs, rhs, "fsub");
+
+                if (node.text == "*")
+                    return builder.CreateFMul(lhs, rhs, "fmul");
+
+                if (node.text == "/")
+                    return builder.CreateFDiv(lhs, rhs, "fdiv");
+            }
 
             if (node.text == "+")
                 return builder.CreateAdd(lhs, rhs, "add");

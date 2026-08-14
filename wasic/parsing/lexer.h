@@ -7,6 +7,7 @@
 enum class TokenKind {
     Identifier,
     Number,
+    Float,
 
     Fn,
     End,
@@ -35,6 +36,7 @@ static const char* tokenName(TokenKind kind) {
     switch (kind) {
         case TokenKind::Identifier: return "Identifier";
         case TokenKind::Number:     return "Number";
+        case TokenKind::Float:      return "Float";
         case TokenKind::Fn:         return "Fn";
         case TokenKind::End:        return "End";
         case TokenKind::LParen:     return "LParen";
@@ -187,6 +189,20 @@ private:
         while (!atEnd() &&
                std::isdigit(static_cast<unsigned char>(peek()))) {
             advance();
+        }
+
+        if (!atEnd() && peek() == '.') {
+            advance();
+
+            while (!atEnd() &&
+                   std::isdigit(static_cast<unsigned char>(peek()))) {
+                advance();
+            }
+
+            return {
+                TokenKind::Float,
+                source.substr(start, pos - start)
+            };
         }
 
         return {

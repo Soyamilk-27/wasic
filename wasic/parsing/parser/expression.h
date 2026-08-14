@@ -85,6 +85,14 @@ inline Node Parser::parsePrimary() {
         return node;
     }
 
+    if (check(TokenKind::Float)) {
+        Node node;
+        node.kind = Node::Kind::Float;
+        node.text = consume(TokenKind::Float).text;
+
+        return node;
+    }
+
     if (check(TokenKind::Identifier)) {
         std::string name = consume(TokenKind::Identifier).text;
 

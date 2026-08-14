@@ -7,7 +7,7 @@ inline void LLVMCodegen::generateStatement(const Statement& stmt) {
         llvm::Value* value = generateNode(stmt.value);
 
         auto* storage = builder.CreateAlloca(
-            builder.getInt32Ty(),
+            value->getType(),
             nullptr,
             stmt.name
         );

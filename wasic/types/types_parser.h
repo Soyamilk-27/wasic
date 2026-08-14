@@ -6,6 +6,7 @@
 struct Node {
     enum class Kind {
         Number,
+        Float,
         Name,
         Array,
         Binary,
