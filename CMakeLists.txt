@@ -13,7 +13,11 @@ message(STATUS "LLVM config: ${LLVM_DIR}")
 add_executable(wasic main.cpp
         wasic/types/types_parser.h
         wasic/parsing/lexer.h
-        wasic/parsing/parser.h)
+        wasic/parsing/parser.h
+        wasic/parsing/parser/core.h
+        wasic/parsing/parser/expression.h
+        wasic/parsing/parser/statement.h
+)
 
 target_include_directories(wasic PRIVATE
         ${LLVM_INCLUDE_DIRS}
