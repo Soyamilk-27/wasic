@@ -85,6 +85,58 @@ private:
     }
 
     Node parseExpression() {
+        Node left = parseTerm();
+
+        while (check(TokenKind::Plus) ||
+               check(TokenKind::Minus)) {
+
+            Node op;
+            op.kind = Node::Kind::Binary;
+            op.text = consume(current().kind).text;
+
+            op.children.push_back(std::move(left));
+            op.children.push_back(parseTerm());
+
+            left = std::move(op);
+               }
+
+        return left;
+    }
+
+    Node parseTerm() {
+        Node left = parsePrimary();
+
+        while (check(TokenKind::Star) ||
+               check(TokenKind::Slash)) {
+
+            Node op;
+            op.kind = Node::Kind::Binary;
+            op.text = consume(current().kind).text;
+
+            op.children.push_back(std::move(left));
+            op.children.push_back(parsePrimary());
+
+            left = std::move(op);
+               }
+
+        return left;
+    }
+
+    Node parsePrimary() {
+        if (check(TokenKind::Number)) {
+            Node node;
+            node.kind = Node::Kind::Number;
+            node.text = consume(TokenKind::Number).text;
+            return node;
+        }
+
+        if (check(TokenKind::Identifier)) {
+            Node node;
+            node.kind = Node::Kind::Name;
+            node.text = consume(TokenKind::Identifier).text;
+            return node;
+        }
+
         if (check(TokenKind::LBracket)) {
             return parseArray();
         }
