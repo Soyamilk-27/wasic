@@ -389,6 +389,90 @@ inline llvm::Value* LLVMCodegen::generateNode(const Node& node) {
             );
         }
 
+        case Node::Kind::Call: {
+            if (node.text != "print") {
+                throw std::runtime_error(
+                    "Unknown builtin: " + node.text
+                );
+            }
+
+            if (node.children.size() != 1) {
+                throw std::runtime_error(
+                    "print expects exactly one argument"
+                );
+            }
+
+            llvm::Value* value =
+                generateNode(node.children[0]);
+
+            llvm::Function* function = nullptr;
+
+            if (value->getType()->isIntegerTy()) {
+                function = module->getFunction("wapi_print_i32");
+            }
+            else if (value->getType()->isFloatingPointTy()) {
+                function = module->getFunction("wapi_print_f32");
+            }
+            else if (value->getType()->isArrayTy()) {
+                auto* arrayType =
+                    llvm::cast<llvm::ArrayType>(value->getType());
+
+                llvm::Type* elementType =
+                    arrayType->getElementType();
+
+                size_t length =
+                    arrayType->getNumElements();
+
+                if (elementType->isIntegerTy()) {
+                    function =
+                        module->getFunction("wapi_print_array_i32");
+                }
+                else if (elementType->isFloatingPointTy()) {
+                    function =
+                        module->getFunction("wapi_print_array_f32");
+                }
+                else {
+                    throw std::runtime_error(
+                        "Unsupported array element type in print"
+                    );
+                }
+
+                llvm::Value* storage =
+                    builder.CreateAlloca(value->getType(), nullptr, "print_array");
+
+                builder.CreateStore(value, storage);
+
+                llvm::Value* data =
+                    builder.CreateGEP(
+                        value->getType(),
+                        storage,
+                        {
+                            builder.getInt32(0),
+                            builder.getInt32(0)
+                        },
+                        "print_data"
+                    );
+
+                return builder.CreateCall(
+                    function,
+                    {
+                        data,
+                        builder.getInt32(length)
+                    }
+                );
+            }
+            else {
+                throw std::runtime_error(
+                    "Unsupported type in print"
+                );
+            }
+
+            return builder.CreateCall(
+                function,
+                {value}
+            );
+        }
+
         default:
             throw std::runtime_error(
                 "Unsupported AST node"
