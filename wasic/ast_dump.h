@@ -12,6 +12,10 @@ inline void dumpNode(const Node& node, int indent = 0) {
             std::cout << pad << "Number: " << node.text << '\n';
             break;
 
+        case Node::Kind::Float:
+            std::cout << pad << "Float: " << node.text << '\n';
+            break;
+
         case Node::Kind::Name:
             std::cout << pad << "Name: " << node.text << '\n';
             break;
@@ -39,6 +43,17 @@ inline void dumpNode(const Node& node, int indent = 0) {
                 dumpNode(child, indent + 2);
 
             break;
+
+        case Node::Kind::Index:
+            std::cout << pad << "Index\n";
+
+            std::cout << pad << "  Array\n";
+            dumpNode(node.children[0], indent + 4);
+
+            std::cout << pad << "  Index\n";
+            dumpNode(node.children[1], indent + 4);
+
+            break;
     }
 }
 
@@ -50,12 +65,13 @@ inline void dumpProgram(const Program& program) {
 
         for (const auto& stmt : fn.body) {
             if (stmt.kind == Statement::Kind::Assignment) {
-                std::cout
-                    << "    Assignment: "
-                    << stmt.name
-                    << '\n';
+                std::cout << "    Assignment\n";
 
-                dumpNode(stmt.value, 6);
+                std::cout << "      Target:\n";
+                dumpNode(stmt.target, 8);
+
+                std::cout << "      Value:\n";
+                dumpNode(stmt.value, 8);
             }
             else {
                 std::cout << "    Expression\n";

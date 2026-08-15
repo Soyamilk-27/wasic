@@ -29,6 +29,7 @@ private:
     void generateFunction(const Function& fn);
     void generateStatement(const Statement& stmt);
     llvm::Value* generateNode(const Node& node);
+    llvm::Value* generateIndexPointer(const Node& node);
 };
 
 #include "llvm_codegen/core.h"

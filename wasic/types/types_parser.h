@@ -28,8 +28,8 @@ struct Statement {
 
     Kind kind;
 
-    std::string name; // only used by Assignment
-    Node value;       // RHS or expression
+    Node target; // Name or Index for Assignment
+    Node value;  // RHS or expression
 };
 
 struct Function {

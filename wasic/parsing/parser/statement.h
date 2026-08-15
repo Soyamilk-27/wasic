@@ -5,22 +5,30 @@
 inline Statement Parser::parseStatement() {
     Statement stmt;
 
-    if (check(TokenKind::Identifier) &&
-        peek().kind == TokenKind::Equal) {
+    // Parse the left side first.
+    Node lhs = parseExpression();
 
-        stmt.kind = Statement::Kind::Assignment;
-        stmt.name = consume(TokenKind::Identifier).text;
-
+    // Assignment
+    if (check(TokenKind::Equal)) {
         consume(TokenKind::Equal);
 
+        if (lhs.kind != Node::Kind::Name &&
+            lhs.kind != Node::Kind::Index) {
+            throw std::runtime_error(
+                "Invalid assignment target"
+            );
+            }
+
+        stmt.kind = Statement::Kind::Assignment;
+        stmt.target = std::move(lhs);
         stmt.value = parseExpression();
 
         return stmt;
     }
 
-    // any expression can be a statement
+    // Normal expression statement
     stmt.kind = Statement::Kind::Expression;
-    stmt.value = parseExpression();
+    stmt.value = std::move(lhs);
 
     return stmt;
 }

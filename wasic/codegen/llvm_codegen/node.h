@@ -2,6 +2,52 @@
 
 #include "../llvm_codegen.h"
 
+inline llvm::Value* LLVMCodegen::generateIndexPointer(const Node& node) {
+    const Node& arrayNode = node.children[0];
+    const Node& indexNode = node.children[1];
+
+    if (arrayNode.kind != Node::Kind::Name) {
+        throw std::runtime_error(
+            "Array indexing requires an array variable"
+        );
+    }
+
+    auto it = variables.find(arrayNode.text);
+
+    if (it == variables.end()) {
+        throw std::runtime_error(
+            "Unknown variable: " + arrayNode.text
+        );
+    }
+
+    llvm::AllocaInst* storage = it->second;
+    llvm::Type* storageType = storage->getAllocatedType();
+
+    if (!storageType->isArrayTy()) {
+        throw std::runtime_error(
+            "Indexing requires an array"
+        );
+    }
+
+    llvm::Value* index = generateNode(indexNode);
+
+    if (!index->getType()->isIntegerTy()) {
+        throw std::runtime_error(
+            "Array index must be an integer"
+        );
+    }
+
+    return builder.CreateGEP(
+        storageType,
+        storage,
+        {
+            builder.getInt32(0),
+            index
+        },
+        "element_ptr"
+    );
+}
+
 inline llvm::Value* LLVMCodegen::generateNode(const Node& node) {
     switch (node.kind) {
         case Node::Kind::Number:
@@ -323,65 +369,18 @@ inline llvm::Value* LLVMCodegen::generateNode(const Node& node) {
         }
 
         case Node::Kind::Index: {
-            const Node& arrayNode = node.children[0];
-            const Node& indexNode = node.children[1];
+            llvm::Value* elementPtr =
+                generateIndexPointer(node);
 
-            // a[index]
-            if (arrayNode.kind != Node::Kind::Name) {
-                throw std::runtime_error(
-                    "Array indexing requires an array variable"
-                );
-            }
+            auto* arrayNode = node.children[0].kind == Node::Kind::Name
+                ? variables.at(node.children[0].text)
+                : nullptr;
 
-            auto it = variables.find(arrayNode.text);
+            llvm::Type* arrayType =
+                arrayNode->getAllocatedType();
 
-            if (it == variables.end()) {
-                throw std::runtime_error(
-                    "Unknown variable: " + arrayNode.text
-                );
-            }
-
-            llvm::AllocaInst* storage = it->second;
-            llvm::Type* storageType = storage->getAllocatedType();
-
-            if (!storageType->isArrayTy()) {
-                throw std::runtime_error(
-                    "Indexing requires an array"
-                );
-            }
-
-            llvm::Value* index = generateNode(indexNode);
-
-            // index must be an integer scalar
-            if (!index->getType()->isIntegerTy()) {
-                throw std::runtime_error(
-                    "Array index must be an integer"
-                );
-            }
-
-            auto* arrayType =
-                llvm::cast<llvm::ArrayType>(storageType);
-
-            llvm::Type* elementType =
-                arrayType->getElementType();
-
-            // array storage:
-            //
-            // %a = alloca [N x T]
-            //
-            // GEP indices:
-            //   0 = enter the array object
-            //   index = element index
-            //
-            llvm::Value* elementPtr = builder.CreateGEP(
-                storageType,
-                storage,
-                {
-                    builder.getInt32(0),
-                    index
-                },
-                "element_ptr"
-            );
+            auto* elementType =
+                llvm::cast<llvm::ArrayType>(arrayType)->getElementType();
 
             return builder.CreateLoad(
                 elementType,
