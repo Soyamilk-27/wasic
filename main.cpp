@@ -12,7 +12,7 @@ int main() {
         x = a[3]
         a[2] = 4
 
-        print(53)
+        print(a[2])
     end
     )";
 
