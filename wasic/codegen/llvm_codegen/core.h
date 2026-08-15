@@ -3,6 +3,8 @@
 #include "../llvm_codegen.h"
 
 inline void LLVMCodegen::generate(const Program& program) {
+    declareBuiltins();
+
     for (auto& func : program.functions) {
         generateFunction(func);
     }
