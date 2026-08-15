@@ -10,7 +10,8 @@ struct Node {
         Name,
         Array,
         Binary,
-        Call
+        Call,
+        Index
     };
 
     Kind kind;

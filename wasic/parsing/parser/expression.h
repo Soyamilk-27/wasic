@@ -2,6 +2,34 @@
 
 #include "../parser.h"
 
+inline Node Parser::parsePostfix() {
+    Node node = parsePrimary();
+
+    if (check(TokenKind::LBracket)) {
+        consume(TokenKind::LBracket);
+
+        Node index = parseExpression();
+
+        consume(TokenKind::RBracket);
+
+        Node indexed;
+        indexed.kind = Node::Kind::Index;
+        indexed.children.push_back(std::move(node));
+        indexed.children.push_back(std::move(index));
+
+        // Explicitly reject a[1][2].
+        if (check(TokenKind::LBracket)) {
+            throw std::runtime_error(
+                "Multidimensional indexing is not supported"
+            );
+        }
+
+        return indexed;
+    }
+
+    return node;
+}
+
 inline Node Parser::parseUnary() {
     if (check(TokenKind::Minus)) {
         consume(TokenKind::Minus);
@@ -25,7 +53,7 @@ inline Node Parser::parseUnary() {
         return parseUnary();
     }
 
-    return parsePrimary();
+    return parsePostfix();
 }
 
 inline Node Parser::parseExpression() {

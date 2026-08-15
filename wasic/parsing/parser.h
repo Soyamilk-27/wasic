@@ -33,6 +33,7 @@ private:
     Node parseTerm();
     Node parsePrimary();
     Node parseArray();
+    Node parsePostfix();
 
     Statement parseStatement();
 };

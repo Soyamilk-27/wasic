@@ -7,15 +7,9 @@
 
 int main() {
     const char* script = R"(
-    fn chick()
-        b = 3
-    end
-
     fn main()
         a = [3.4 4.5 2+1 1.1]
-        x = 10
-        y = 2.5
-        z = x + y
+        x = a[3]
     end
     )";
 

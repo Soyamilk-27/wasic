@@ -322,6 +322,74 @@ inline llvm::Value* LLVMCodegen::generateNode(const Node& node) {
             );
         }
 
+        case Node::Kind::Index: {
+            const Node& arrayNode = node.children[0];
+            const Node& indexNode = node.children[1];
+
+            // a[index]
+            if (arrayNode.kind != Node::Kind::Name) {
+                throw std::runtime_error(
+                    "Array indexing requires an array variable"
+                );
+            }
+
+            auto it = variables.find(arrayNode.text);
+
+            if (it == variables.end()) {
+                throw std::runtime_error(
+                    "Unknown variable: " + arrayNode.text
+                );
+            }
+
+            llvm::AllocaInst* storage = it->second;
+            llvm::Type* storageType = storage->getAllocatedType();
+
+            if (!storageType->isArrayTy()) {
+                throw std::runtime_error(
+                    "Indexing requires an array"
+                );
+            }
+
+            llvm::Value* index = generateNode(indexNode);
+
+            // index must be an integer scalar
+            if (!index->getType()->isIntegerTy()) {
+                throw std::runtime_error(
+                    "Array index must be an integer"
+                );
+            }
+
+            auto* arrayType =
+                llvm::cast<llvm::ArrayType>(storageType);
+
+            llvm::Type* elementType =
+                arrayType->getElementType();
+
+            // array storage:
+            //
+            // %a = alloca [N x T]
+            //
+            // GEP indices:
+            //   0 = enter the array object
+            //   index = element index
+            //
+            llvm::Value* elementPtr = builder.CreateGEP(
+                storageType,
+                storage,
+                {
+                    builder.getInt32(0),
+                    index
+                },
+                "element_ptr"
+            );
+
+            return builder.CreateLoad(
+                elementType,
+                elementPtr,
+                "element"
+            );
+        }
+
         default:
             throw std::runtime_error(
                 "Unsupported AST node"
