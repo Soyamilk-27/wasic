@@ -23,6 +23,7 @@ add_executable(wasic main.cpp
         wasic/codegen/llvm_codegen/function.h
         wasic/codegen/llvm_codegen/statement.h
         wasic/codegen/llvm_codegen/node.h
+        wasic/codegen/llvm_codegen/builtins.h
 )
 
 target_include_directories(wasic PRIVATE

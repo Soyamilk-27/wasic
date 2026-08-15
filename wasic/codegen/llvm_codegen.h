@@ -26,6 +26,7 @@ private:
     std::unique_ptr<llvm::Module> module;
     std::unordered_map<std::string, llvm::AllocaInst*> variables;
 
+    void declareBuiltins();
     void generateFunction(const Function& fn);
     void generateStatement(const Statement& stmt);
     llvm::Value* generateNode(const Node& node);
@@ -36,3 +37,4 @@ private:
 #include "llvm_codegen/function.h"
 #include "llvm_codegen/statement.h"
 #include "llvm_codegen/node.h"
+#include "llvm_codegen/builtins.h"
